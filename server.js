@@ -2,7 +2,7 @@
 var express = require('express');
 //create our app
 var app = express();
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3030;
 
 app.use(express.static('public'));
 
