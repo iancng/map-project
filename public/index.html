@@ -22,6 +22,7 @@
             <tr>
                 <th>Lamp Post No.</th>
                 <th>Distance</th>
+                <th>Street Name</th>
             </tr>
     </div>
     <style>
@@ -165,6 +166,10 @@
                 let lon = listOfLamppost[i].geometry.coordinates[0];
                 let lamppostNo = listOfLamppost[i].properties.LAMP_NO;
                 let latlon = new L.LatLng(lat, lon);
+                let streetName = listOfLamppost[i].properties.PRIMARY_ST;
+                streetName = streetName.toLowerCase().replace(/\b[a-z]/g, function (letter) {
+                    return letter.toUpperCase();
+                });
                 let marker = L.marker(latlon).bindTooltip(lamppostNo, { permanent: true, direction: 'right' }).addTo(lampPostLayer);
                 originalIcon = marker.options.icon;
                 marker.on('click', function (e) {
@@ -177,24 +182,25 @@
                     marker.setIcon(redIcon);
                 });
                 let distance = latlon.distanceTo(personLayer.getLayers()[0].getLatLng()).toFixed(1);
-                unsortedList.push({lamppostNo: lamppostNo, distance: distance });
+                unsortedList.push({lamppostNo: lamppostNo, distance: distance, streetName: streetName});
             }
             let sortedList = unsortedList.sort((a, b) => (a.distance - b.distance > 0) ? -1 : 1);
-            console.log(sortedList);
             //add to table in order
             for (let i = 0; i < sortedList.length; i++) {
-                addDataToTable(sortedList[i].lamppostNo, sortedList[i].distance);
+                addDataToTable(sortedList[i].lamppostNo, sortedList[i].distance, sortedList[i].streetName);
             }
         }
         
 
-        function addDataToTable(lampPostNo, distance) {
+        function addDataToTable(lampPostNo, distance, streetName) {
             var table = document.getElementById("lampposttable");
             var row = table.insertRow(1);
             var cell1 = row.insertCell(0);
             var cell2 = row.insertCell(1);
+            var cell3 = row.insertCell(2);
             cell1.innerHTML = lampPostNo;
             cell2.innerHTML = distance + "m";
+            cell3.innerHTML = streetName;
             row.onclick = () => {
                 var markers = lampPostLayer.getLayers();
                 for (var i = 0; i < markers.length; i++) {
