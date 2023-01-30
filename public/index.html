@@ -16,6 +16,10 @@
 <body>
     <div id="map" style="height: 70vh; width:100%;"></div>
     <div>
+        <div class="rangeInput">
+            Range:<input type="text" name="range" id="range"><span>m</span>
+            <button onclick="rangeChange()" class="search">Search</button>
+        </div>
         <button onclick="getLocation()" class="loading">Get Location</button>
         <!-- add border to table-->
         <table id="lampposttable">
@@ -43,8 +47,10 @@
             iconUrl: 'person.png',
             iconSize: [40, 60],
         });
-
         var originalIcon;
+
+        var defaultRange = 80;
+        document.getElementById("range").placeholder = defaultRange;;
 
         var redIcon = new L.Icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -133,7 +139,7 @@
         }
 
         async function getLampposts(long, lat) {
-            var meters = 80;
+            var meters = defaultRange;
             url = `https://geodata.gov.hk/geoserver/geodatastore/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=geodatastore%3ASDPVS_HYD_36RHTEYPF8VH_0&maxFeatures=5000&CQL_FILTER=DWITHIN(ORA_GEOMETRY,POINT(${long}%20${lat}),${meters},meters)&outputFormat=application%2Fjson`
             let res = await fetch(url);
             return await res.json();
@@ -193,6 +199,7 @@
                 for (var i = 0; i < markers.length; i++) {
                     if (markers[i].getTooltip().getContent() == lampPostNo) {
                         markers[i].setIcon(redIcon);
+                        map.flyTo(markers[i].getLatLng(), 19);
                     }
                 }
             }
@@ -224,6 +231,23 @@
                     table.rows[i].style.color = "white";
                 }
             }
+        }
+
+        function rangeChange(){
+            var range = document.getElementById("range").value;
+            if(range>150){
+                range = 150;
+                document.getElementById("range").value = 150;
+                alert("Maximum range is 150m")
+            }
+            defaultRange = range;
+            let personMarker = personLayer.getLayers()[0];
+            let lat = personMarker.getLatLng().lat;
+            let long = personMarker.getLatLng().lng;
+            getLampposts(long, lat).then(data => {
+                clearMarkerLayer(lampPostLayer);
+                plotLampposts(data);
+            });
         }
 
         getLocation();
