@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+        integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+        integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
+</head>
+
+<body>
+    <div id="map" style="height: 95vh; width:80%;"></div>
+    <div>
+        <button onclick="getLocation()" class="loading">Get Location</button>
+        <!-- add border to table-->
+        <table id="lampposttable">
+            <tr>
+                <th>Lamp Post No.</th>
+                <th>Distance</th>
+            </tr>
+    </div>
+    <style>
+        #map {
+            float: left;
+        }
+
+        .loading {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        var map = L.map('map', {
+            //hong kong 
+            center: [22.3964, 114.1095],
+            zoom: 14
+        });
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+        //Layer Group
+        var lampPostLayer = L.layerGroup().addTo(map);
+        var personLayer = L.layerGroup().addTo(map);
+        //Icon 
+        var personIcon = L.icon({
+            iconUrl: 'person.png',
+            iconSize: [40, 60],
+        });
+
+        var originalIcon;
+
+        var redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        //when map is zoom out, hide markers of layer lamppost
+        map.on('zoomend', function () {
+            if (map.getZoom() < 17) {
+                map.removeLayer(lampPostLayer);
+            } else {
+                map.addLayer(lampPostLayer);
+            }
+        });
+
+        map.on('click', function (e) {
+            //click location to get lat and long
+            var lat = e.latlng.lat;
+            var lon = e.latlng.lng;
+            let position = { coords: { latitude: lat, longitude: lon } };
+            showPosition(position);
+        })
+
+        //get location
+        function getLocation() {
+            let option = {
+                enableHighAccuracy: false,
+                timeout: 10000,
+                maximumAge: 0
+            }
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError, option);
+            } else {
+                x.innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+        function showPosition(position) {
+            clearMarkerLayer(personLayer);
+            clearMarkerLayer(lampPostLayer);
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            var latlon = new L.LatLng(lat, lon);
+            var marker = L.marker(latlon, { draggable: 'true', icon: personIcon }).addTo(personLayer);
+            marker.on('dragend', function (event) {
+                clearMarkerLayer(lampPostLayer);
+                var marker = event.target;
+                var position = marker.getLatLng();
+                marker.setLatLng(new L.LatLng(position.lat, position.lng), { draggable: 'true' });
+                setMarkers(position.lng, position.lat);
+            });
+            setMarkers(lon, lat);
+        }
+
+        function setMarkers(lon, lat) {
+            var latlon = new L.LatLng(lat, lon)
+            getLampposts(lon, lat).then((data) => {
+                plotLampposts(data);
+            })
+            map.flyTo(latlon, 19);
+        }
+
+        function showError(error) {
+            //console.log error
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    console.log("User denied the request for Geolocation.");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.log("Location information is unavailable.");
+                    break;
+                case error.TIMEOUT:
+                    console.log("The request to get user location timed out.");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    console.log("An unknown error occurred.");
+                    break;
+            }
+        }
+
+        function clearMarkerLayer(layer) {
+            layer.clearLayers();
+        }
+
+        async function getLampposts(long, lat) {
+            var meters = 80;
+            url = `https://geodata.gov.hk/geoserver/geodatastore/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=geodatastore%3ASDPVS_HYD_36RHTEYPF8VH_0&maxFeatures=5000&CQL_FILTER=DWITHIN(ORA_GEOMETRY,POINT(${long}%20${lat}),${meters},meters)&outputFormat=application%2Fjson`
+            let res = await fetch(url);
+            return await res.json();
+        }
+
+        function plotLampposts(data) {
+            let listOfLamppost = data.features;
+            clearTable();
+            let unsortedList = [];
+            for (let i = 0; i < listOfLamppost.length; i++) {
+                let lat = listOfLamppost[i].geometry.coordinates[1];
+                let lon = listOfLamppost[i].geometry.coordinates[0];
+                let lamppostNo = listOfLamppost[i].properties.LAMP_NO;
+                let latlon = new L.LatLng(lat, lon);
+                let marker = L.marker(latlon).bindTooltip(lamppostNo, { permanent: true, direction: 'right' }).addTo(lampPostLayer);
+                originalIcon = marker.options.icon;
+                marker.on('click', function (e) {
+                    var markers = lampPostLayer.getLayers();
+                    for (var i = 0; i < markers.length; i++) {
+                        markers[i].setIcon(originalIcon);
+                    }
+                    removeStylingFromAllCells();
+                    addStylingToCell(lamppostNo)
+                    marker.setIcon(redIcon);
+                });
+                let distance = latlon.distanceTo(personLayer.getLayers()[0].getLatLng()).toFixed(1);
+                unsortedList.push({lamppostNo: lamppostNo, distance: distance });
+            }
+            let sortedList = unsortedList.sort((a, b) => (a.distance - b.distance > 0) ? -1 : 1);
+            console.log(sortedList);
+            //add to table in order
+            for (let i = 0; i < sortedList.length; i++) {
+                addDataToTable(sortedList[i].lamppostNo, sortedList[i].distance);
+            }
+        }
+        
+
+        function addDataToTable(lampPostNo, distance) {
+            var table = document.getElementById("lampposttable");
+            var row = table.insertRow(1);
+            var cell1 = row.insertCell(0);
+            var cell2 = row.insertCell(1);
+            cell1.innerHTML = lampPostNo;
+            cell2.innerHTML = distance + "m";
+            row.onclick = () => {
+                var markers = lampPostLayer.getLayers();
+                for (var i = 0; i < markers.length; i++) {
+                        markers[i].setIcon(originalIcon);
+                }
+                removeStylingFromAllCells();
+                addStylingToCell(lampPostNo)
+                for (var i = 0; i < markers.length; i++) {
+                    if (markers[i].getTooltip().getContent() == lampPostNo) {
+                        markers[i].setIcon(redIcon);
+                    }
+                }
+            }
+        }
+
+        function clearTable() {
+            var table = document.getElementById("lampposttable");
+            var rowCount = table.rows.length;
+            for (var i = rowCount - 1; i > 0; i--) {
+                table.deleteRow(i);
+            }
+        }
+
+        function removeStylingFromAllCells() {
+            var table = document.getElementById("lampposttable");
+            var rowCount = table.rows.length;
+            for (var i = rowCount - 1; i > 0; i--) {
+                table.rows[i].style.backgroundColor = "white";
+                table.rows[i].style.color = "black";
+            }
+        }
+
+        function addStylingToCell(lamppostNo) {
+            var table = document.getElementById("lampposttable");
+            var rowCount = table.rows.length;
+            for (var i = rowCount - 1; i > 0; i--) {
+                if (table.rows[i].cells[0].innerHTML == lamppostNo) {
+                    table.rows[i].style.backgroundColor = "red";
+                    table.rows[i].style.color = "white";
+                }
+            }
+        }
+
+        getLocation();
+        
+    </script>
+</body>
+
+</html>
