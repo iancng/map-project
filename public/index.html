@@ -13,19 +13,20 @@
 </head>
 
 <body>
+    <button id="languageButton" onclick="changeLanguage()" class="languageButton">Change Language</button>
     <div id="map" style="height: 70vh; width:100%;"></div>
     <div>
         <div class="rangeInput">
-            範圍:<input type="number" name="range" id="range"><span>m</span>
-            <button onclick="rangeChange()" class="search">搜尋</button>
+            <span id="rangeLabel">範圍:</span><input type="number" name="range" id="range"><span>m</span>
+            <button onclick="rangeChange()" class="search" id="searchButton">搜尋</button>
         </div>
-        <button onclick="getLocation()" class="loading">取得位置</button>
+        <button onclick="getLocation()" class="loading" id="getLocationButton">取得位置</button>
         <!-- add border to table-->
         <table id="lampposttable">
             <tr>
-                <th>燈柱號碼</th>
-                <th>距離</th>
-                <th>街名</th>
+                <th id="lamppostLabel">燈柱號碼</th>
+                <th id="distanceLabel">距離</th>
+                <th id="streetLabel">街名</th>
             </tr>
     </div>
     <script>
@@ -34,13 +35,29 @@
             center: [22.3964, 114.1095],
             zoom: 14
         });
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
+
+
         //Layer Group
         var lampPostLayer = L.layerGroup().addTo(map);
         var personLayer = L.layerGroup().addTo(map);
+        var englishLayer = L.layerGroup().addTo(map);
+        var chineseLayer = L.layerGroup().addTo(map);
+        //setup Layer with map
+        
+        L.tileLayer('https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/basemap/wgs84/{z}/{x}/{y}.png',{
+        maxZoom: 19,
+        }).addTo(map);
+        
+        L.tileLayer(`https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/label/hk/tc/wgs84/{z}/{x}/{y}.png`,{
+        maxZoom: 19,
+        }).addTo(chineseLayer);
+
+        L.tileLayer(`https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/label/hk/en/wgs84/{z}/{x}/{y}.png`,{
+        maxZoom: 19,
+        }).addTo(englishLayer);
+
+        map.removeLayer(englishLayer);
+
         //Icon 
         var personIcon = L.icon({
             iconUrl: 'person.png',
@@ -248,6 +265,32 @@
                 clearMarkerLayer(lampPostLayer);
                 plotLampposts(data);
             });
+        }
+
+        function changeLanguage(){
+            let button = document.getElementById("languageButton");
+            if(button.innerHTML == "更改語言"){
+                button.innerHTML = "Change Language";
+                document.getElementById("rangeLabel").innerHTML = "範圍";
+                document.getElementById("lamppostLabel").innerHTML = "燈柱號碼";
+                document.getElementById("distanceLabel").innerHTML = "距離";
+                document.getElementById("streetLabel").innerHTML = "街名";
+                document.getElementById("searchButton").innerHTML = "搜尋";
+                document.getElementById("getLocationButton").innerHTML = "取得位置";
+                map.removeLayer(englishLayer);;
+                map.addLayer(chineseLayer);
+            }else{
+                button.innerHTML = "更改語言";
+                document.getElementById("rangeLabel").innerHTML = "Range";
+                document.getElementById("lamppostLabel").innerHTML = "Lamppost No.";
+                document.getElementById("distanceLabel").innerHTML = "Distance";
+                document.getElementById("streetLabel").innerHTML = "Street Name";
+                document.getElementById("searchButton").innerHTML = "Search";
+                document.getElementById("getLocationButton").innerHTML = "Get Location";
+                map.removeLayer(chineseLayer);
+                map.addLayer(englishLayer);
+            }
+
         }
         getLocation();
     </script>

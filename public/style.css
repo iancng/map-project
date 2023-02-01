@@ -4,7 +4,6 @@ table, th, td {
 }
 
 table{
-  cursor: pointer;
   border-radius: 30px;
   border: 2px solid grey;
   padding: 20px;
@@ -14,6 +13,10 @@ table{
 
 table > tbody > th, td{
   text-align: center;
+}
+
+table > tbody > tr > td{
+  cursor: pointer;
 }
 
 #map {
@@ -35,6 +38,23 @@ table > tbody > th, td{
   margin-right: auto;
   border-radius: 15px;
 }
+
+.languageButton{
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 12x;
+  margin: 2px 5px 2px 5px;
+  cursor: pointer;
+  display: inline-block;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 15px;
+}
+
 
 .rangeInput{
   text-align: center;
