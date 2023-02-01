@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    <button id="languageButton" onclick="changeLanguage()" class="languageButton">Change Language</button>
+    <button id="languageButton" onclick="changeLanguage()" class="languageButton">EN</button>
     <div id="map" style="height: 70vh; width:100%;"></div>
     <div>
         <div class="rangeInput">
@@ -36,6 +36,8 @@
             zoom: 14
         });
 
+        //set language
+        var language = "中文"
 
         //Layer Group
         var lampPostLayer = L.layerGroup().addTo(map);
@@ -137,15 +139,19 @@
             //console.log error
             switch (error.code) {
                 case error.PERMISSION_DENIED:
+                    alert("User denied the request for Geolocation.");
                     console.log("User denied the request for Geolocation.");
                     break;
                 case error.POSITION_UNAVAILABLE:
+                    alert("Location information is unavailable.");
                     console.log("Location information is unavailable.");
                     break;
                 case error.TIMEOUT:
+                    alert("The request to get user location timed out.");
                     console.log("The request to get user location timed out.");
                     break;
                 case error.UNKNOWN_ERROR:
+                    alert("An unknown error occurred.");
                     console.log("An unknown error occurred.");
                     break;
             }
@@ -200,7 +206,7 @@
         function addDataToTable(lampPostNo, distance, streetName) {
             var table = document.getElementById("lampposttable");
             var row = table.insertRow(1);
-            var cell1 = row.insertCell(0);
+           var cell1 = row.insertCell(0);
             var cell2 = row.insertCell(1);
             var cell3 = row.insertCell(2);
             cell1.innerHTML = lampPostNo;
@@ -255,7 +261,11 @@
             if(range>150){
                 range = 150;
                 document.getElementById("range").value = 150;
-                alert("Maximum range is 150m")
+                if(language == "EN"){
+                    alert("Maximum range is 150m")
+                }else{
+                    alert("最大範圍為150m")
+                }
             }
             defaultRange = range;
             let personMarker = personLayer.getLayers()[0];
@@ -269,7 +279,7 @@
 
         function changeLanguage(){
             let button = document.getElementById("languageButton");
-            if(button.innerHTML == "更改語言"){
+            if(language == "EN"){
                 button.innerHTML = "Change Language";
                 document.getElementById("rangeLabel").innerHTML = "範圍";
                 document.getElementById("lamppostLabel").innerHTML = "燈柱號碼";
@@ -279,6 +289,7 @@
                 document.getElementById("getLocationButton").innerHTML = "取得位置";
                 map.removeLayer(englishLayer);;
                 map.addLayer(chineseLayer);
+                language = "中文";
             }else{
                 button.innerHTML = "更改語言";
                 document.getElementById("rangeLabel").innerHTML = "Range";
@@ -289,6 +300,7 @@
                 document.getElementById("getLocationButton").innerHTML = "Get Location";
                 map.removeLayer(chineseLayer);
                 map.addLayer(englishLayer);
+                language = "EN"
             }
 
         }

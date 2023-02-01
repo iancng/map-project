@@ -19,6 +19,26 @@ table > tbody > tr > td{
   cursor: pointer;
 }
 
+.title{
+  text-align: center;
+  display: inline;
+}
+
+.languageButton{
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 5px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 12x;
+  margin: 2px 5px 2px 5px;
+  cursor: pointer;
+  display: inline-block;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 15px;
+}
 #map {
   float: left;
   margin-bottom: 5px;
@@ -32,22 +52,6 @@ table > tbody > tr > td{
   text-decoration: none;
   font-size: 16px;
   margin: 5px 10px 5px 10px;
-  cursor: pointer;
-  display: inline-block;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 15px;
-}
-
-.languageButton{
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 5px;
-  text-align: center;
-  text-decoration: none;
-  font-size: 12x;
-  margin: 2px 5px 2px 5px;
   cursor: pointer;
   display: inline-block;
   margin-left: auto;
