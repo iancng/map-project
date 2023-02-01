@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>查閱燈柱</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
         integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
     <link rel="stylesheet" href="./style.css">
@@ -17,16 +16,16 @@
     <div id="map" style="height: 70vh; width:100%;"></div>
     <div>
         <div class="rangeInput">
-            Range:<input type="number" name="range" id="range"><span>m</span>
-            <button onclick="rangeChange()" class="search">Search</button>
+            範圍:<input type="number" name="range" id="range"><span>m</span>
+            <button onclick="rangeChange()" class="search">搜尋</button>
         </div>
-        <button onclick="getLocation()" class="loading">Get Location</button>
+        <button onclick="getLocation()" class="loading">取得位置</button>
         <!-- add border to table-->
         <table id="lampposttable">
             <tr>
-                <th>Lamp Post No.</th>
-                <th>Distance</th>
-                <th>Street Name</th>
+                <th>燈柱號碼</th>
+                <th>距離</th>
+                <th>街名</th>
             </tr>
     </div>
     <script>
@@ -91,6 +90,7 @@
                 x.innerHTML = "Geolocation is not supported by this browser.";
             }
         }
+
         function showPosition(position) {
             clearMarkerLayer(personLayer);
             clearMarkerLayer(lampPostLayer);
@@ -168,6 +168,7 @@
                     removeStylingFromAllCells();
                     addStylingToCell(lamppostNo)
                     marker.setIcon(redIcon);
+                    map.flyTo(latlon, 19);
                 });
                 let distance = latlon.distanceTo(personLayer.getLayers()[0].getLatLng()).toFixed(1);
                 unsortedList.push({lamppostNo: lamppostNo, distance: distance, streetName: streetName});
@@ -179,7 +180,6 @@
             }
         }
         
-
         function addDataToTable(lampPostNo, distance, streetName) {
             var table = document.getElementById("lampposttable");
             var row = table.insertRow(1);
@@ -249,9 +249,7 @@
                 plotLampposts(data);
             });
         }
-
         getLocation();
-        
     </script>
 </body>
 
