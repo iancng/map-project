@@ -280,7 +280,8 @@
         function changeLanguage(){
             let button = document.getElementById("languageButton");
             if(language == "EN"){
-                button.innerHTML = "Change Language";
+                button.innerHTML = language;
+                language = "中文";
                 document.getElementById("rangeLabel").innerHTML = "範圍";
                 document.getElementById("lamppostLabel").innerHTML = "燈柱號碼";
                 document.getElementById("distanceLabel").innerHTML = "距離";
@@ -289,9 +290,9 @@
                 document.getElementById("getLocationButton").innerHTML = "取得位置";
                 map.removeLayer(englishLayer);;
                 map.addLayer(chineseLayer);
-                language = "中文";
             }else{
-                button.innerHTML = "更改語言";
+                button.innerHTML = language;
+                language = "EN"
                 document.getElementById("rangeLabel").innerHTML = "Range";
                 document.getElementById("lamppostLabel").innerHTML = "Lamppost No.";
                 document.getElementById("distanceLabel").innerHTML = "Distance";
@@ -300,7 +301,6 @@
                 document.getElementById("getLocationButton").innerHTML = "Get Location";
                 map.removeLayer(chineseLayer);
                 map.addLayer(englishLayer);
-                language = "EN"
             }
 
         }
