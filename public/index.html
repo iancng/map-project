@@ -115,16 +115,20 @@
             clearMarkerLayer(lampPostLayer);
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
-            var latlon = new L.LatLng(lat, lon);
-            var marker = L.marker(latlon, { draggable: 'true', icon: personIcon }).addTo(personLayer);
-            marker.on('dragend', function (event) {
-                clearMarkerLayer(lampPostLayer);
-                var marker = event.target;
-                var position = marker.getLatLng();
-                marker.setLatLng(new L.LatLng(position.lat, position.lng), { draggable: 'true' });
-                setMarkers(position.lng, position.lat);
-            });
-            setMarkers(lon, lat);
+            if (lat === undefined || lon === undefined) {
+                alert("Failed to get your location");
+            } else {
+                var latlon = new L.LatLng(lat, lon);
+                var marker = L.marker(latlon, { draggable: 'true', icon: personIcon }).addTo(personLayer);
+                marker.on('dragend', function (event) {
+                    clearMarkerLayer(lampPostLayer);
+                    var marker = event.target;
+                    var position = marker.getLatLng();
+                    marker.setLatLng(new L.LatLng(position.lat, position.lng), { draggable: 'true' });
+                    setMarkers(position.lng, position.lat);
+                });
+                setMarkers(lon, lat);
+            }
         }
 
         function setMarkers(lon, lat) {
