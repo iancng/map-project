@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -29,6 +30,9 @@
                 <th id="streetLabel">街名</th>
             </tr>
     </div>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
+        integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI"
+        crossorigin="anonymous"></script>
     <script>
         var map = L.map('map', {
             //hong kong 
@@ -44,27 +48,32 @@
         var personLayer = L.layerGroup().addTo(map);
         var englishLayer = L.layerGroup().addTo(map);
         var chineseLayer = L.layerGroup().addTo(map);
+        var otherUserLayer = L.layerGroup().addTo(map);
         //setup Layer with map
-        
-        L.tileLayer('https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/basemap/wgs84/{z}/{x}/{y}.png',{
-        maxZoom: 19,
+
+        L.tileLayer('https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/basemap/wgs84/{z}/{x}/{y}.png', {
+            maxZoom: 19,
         }).addTo(map);
-        
-        L.tileLayer(`https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/label/hk/tc/wgs84/{z}/{x}/{y}.png`,{
-        maxZoom: 19,
+
+        L.tileLayer(`https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/label/hk/tc/wgs84/{z}/{x}/{y}.png`, {
+            maxZoom: 19,
         }).addTo(chineseLayer);
 
-        L.tileLayer(`https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/label/hk/en/wgs84/{z}/{x}/{y}.png`,{
-        maxZoom: 19,
+        L.tileLayer(`https://mapapi.geodata.gov.hk/gs/api/v1.0.0/xyz/label/hk/en/wgs84/{z}/{x}/{y}.png`, {
+            maxZoom: 19,
         }).addTo(englishLayer);
 
         map.removeLayer(englishLayer);
 
         //Icon 
         var personIcon = L.icon({
-            iconUrl: 'person.png',
+            iconUrl: './image/person.png',
             iconSize: [40, 60],
         });
+        var otherPeopleIcon = L.icon({
+            iconUrl: './image/otherPeople.png',
+            iconSize: [40, 60],
+        })
         var originalIcon;
 
         var defaultRange = 80;
@@ -94,6 +103,23 @@
             var lon = e.latlng.lng;
             let position = { coords: { latitude: lat, longitude: lon } };
             showPosition(position);
+        })
+
+        //SOCKETIO
+        var socket = io();
+        socket.on('sharedLocation',(location)=>{
+            let lat = location.lat;
+            let long = location.long;
+            let username = location.username;
+            //add marker with location with username as tooltip and id
+            //if marker already exist, remove it
+            if (otherUserLayer.getLayer(username) !== undefined) {
+                otherUserLayer.removeLayer(username);
+            }
+            var latlon = new L.LatLng(lat, long);
+            var marker = L.marker(latlon, {icon: redIcon }).addTo(otherUserLayer);
+            marker.bindTooltip(username);
+            marker.id = username;
         })
 
         //get location
@@ -128,6 +154,7 @@
                     setMarkers(position.lng, position.lat);
                 });
                 setMarkers(lon, lat);
+                socket.emit('location', {username:'', lat: lat, lon: lon });
             }
         }
 
@@ -198,7 +225,7 @@
                     map.flyTo(latlon, 19);
                 });
                 let distance = latlon.distanceTo(personLayer.getLayers()[0].getLatLng()).toFixed(1);
-                unsortedList.push({lamppostNo: lamppostNo, distance: distance, streetName: streetName});
+                unsortedList.push({ lamppostNo: lamppostNo, distance: distance, streetName: streetName });
             }
             let sortedList = unsortedList.sort((a, b) => (a.distance - b.distance > 0) ? -1 : 1);
             //add to table in order
@@ -206,11 +233,11 @@
                 addDataToTable(sortedList[i].lamppostNo, sortedList[i].distance, sortedList[i].streetName);
             }
         }
-        
+
         function addDataToTable(lampPostNo, distance, streetName) {
             var table = document.getElementById("lampposttable");
             var row = table.insertRow(1);
-           var cell1 = row.insertCell(0);
+            var cell1 = row.insertCell(0);
             var cell2 = row.insertCell(1);
             var cell3 = row.insertCell(2);
             cell1.innerHTML = lampPostNo;
@@ -219,7 +246,7 @@
             row.onclick = () => {
                 var markers = lampPostLayer.getLayers();
                 for (var i = 0; i < markers.length; i++) {
-                        markers[i].setIcon(originalIcon);
+                    markers[i].setIcon(originalIcon);
                 }
                 removeStylingFromAllCells();
                 addStylingToCell(lampPostNo)
@@ -260,14 +287,14 @@
             }
         }
 
-        function rangeChange(){
+        function rangeChange() {
             var range = document.getElementById("range").value;
-            if(range>150){
+            if (range > 150) {
                 range = 150;
                 document.getElementById("range").value = 150;
-                if(language == "EN"){
+                if (language == "EN") {
                     alert("Maximum range is 150m")
-                }else{
+                } else {
                     alert("最大範圍為150m")
                 }
             }
@@ -281,9 +308,9 @@
             });
         }
 
-        function changeLanguage(){
+        function changeLanguage() {
             let button = document.getElementById("languageButton");
-            if(language == "EN"){
+            if (language == "EN") {
                 button.innerHTML = language;
                 language = "中文";
                 document.getElementById("rangeLabel").innerHTML = "範圍";
@@ -294,7 +321,7 @@
                 document.getElementById("getLocationButton").innerHTML = "取得位置";
                 map.removeLayer(englishLayer);;
                 map.addLayer(chineseLayer);
-            }else{
+            } else {
                 button.innerHTML = language;
                 language = "EN"
                 document.getElementById("rangeLabel").innerHTML = "Range";
