@@ -17,33 +17,46 @@
 </head>
 
 <body>
-    <nav>
-        <div class="nav-left">
-            <h5 class="title">查閱燈柱</h5>
-        </div>
-        <div class="nav-right">
-            <button id="languageButton" onclick="changeLanguage()" class="languageButton">EN</button>
-        </div>
-    </nav>
-    <div class="rangeInput">
-        <span id="rangeLabel">範圍:</span><input type="number" name="range" id="range"><span>m</span>
+    <div class="functionBar">
+        <button onClick="showTable()" class="tableButton"><i class="fa-solid fa-bars"></i></button>
         <button onclick="rangeChange()" class="searchButton" id="searchButton"><i class="fa-solid fa-magnifying-glass"></i></button>
         <button onclick="getLocation()" class="getLocationButton" id="getLocationButton"><i class="fa-solid fa-location-arrow"></i></button>
-        <button onClick="showTable()" class="tableButton"><i class="fa-solid fa-bars"></i></button>
+        <button id="languageButton" onclick="changeLanguage()" class="languageButton">EN</button>
     </div>
     <div class="tableContainer" id="tableContainer">
         <!-- add border to table-->
         <table id="lampposttable">
             <tr>
-                <th id="lamppostLabel">燈柱號碼</th>
+                <th id="lamppostLabel">號碼</th>
                 <th id="distanceLabel">距離</th>
-                <th id="streetLabel">街名</th>
+                <th id="lamppostDetails">詳情</th>
             </tr>
         </table>
     </div>
     <div id="map">
     </div>
-
+    <div id="lamppostDetailsContainer" class="lamppostDetailsContainer">
+        <button id="hideDetails" onclick="hideDetails()"><i class="fa-solid fa-xmark"></i></button>
+        <h4 id="lamppostNo"></h4>
+        <table class="detailsTable">
+            <tr>
+                <th>Longitude</th>
+                <td id="longitude"></td>
+            </tr>
+            <tr>
+                <th>Latitude</th>
+                <td id="latitude"></td>
+            </tr>
+            <tr>
+                <th>District</th>
+                <td id="district"></td>
+            </tr>
+            <tr>
+                <th>Street Name.</th>
+                <td id="streetName"></td>
+            </tr>
+        </table>
+    </div>
     <script>
         var map = L.map('map', {
             //hong kong 
@@ -88,7 +101,6 @@
         var originalIcon;
 
         var defaultRange = 80;
-        document.getElementById("range").placeholder = defaultRange;;
 
         var redIcon = new L.Icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -189,7 +201,7 @@
 
         async function getLampposts(long, lat) {
             var meters = defaultRange;
-            url = `https://geodata.gov.hk/geoserver/geodatastore/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=geodatastore%3ASDPVS_HYD_36RHTEYPF8VH_0&maxFeatures=5000&CQL_FILTER=DWITHIN(ORA_GEOMETRY,POINT(${long}%20${lat}),${meters},meters)&outputFormat=application%2Fjson`
+            url = `https://geodata.gov.hk/geoserver/geodatastore/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=geodatastore%3ASDPVS_HYD_36RHTEYPF8VH_0&maxFeatures=5000&CQL_FILTER=DWITHIN(ORA_GEOMETRY,POINT(${long}%20${lat}),${meters},meters)&outputFormat=application%2Fjson`;
             let res = await fetch(url);
             return await res.json();
         }
@@ -202,11 +214,12 @@
                 let lat = listOfLamppost[i].geometry.coordinates[1];
                 let lon = listOfLamppost[i].geometry.coordinates[0];
                 let lamppostNo = listOfLamppost[i].properties.LAMP_NO;
-                let latlon = new L.LatLng(lat, lon);
                 let streetName = listOfLamppost[i].properties.PRIMARY_ST;
+                let district = listOfLamppost[i].properties.DISTRICT;
                 streetName = streetName.toLowerCase().replace(/\b[a-z]/g, function (letter) {
                     return letter.toUpperCase();
                 });
+                let latlon = new L.LatLng(lat, lon);
                 let marker = L.marker(latlon).bindTooltip(lamppostNo, { permanent: true, direction: 'right' }).addTo(lampPostLayer);
                 originalIcon = marker.options.icon;
                 marker.on('click', function (e) {
@@ -220,16 +233,16 @@
                     map.flyTo(latlon, 19);
                 });
                 let distance = latlon.distanceTo(personLayer.getLayers()[0].getLatLng()).toFixed(1);
-                unsortedList.push({ lamppostNo: lamppostNo, distance: distance, streetName: streetName });
+                unsortedList.push({ lamppostNo: lamppostNo, distance: distance, streetName: streetName, district: district});
             }
             let sortedList = unsortedList.sort((a, b) => (a.distance - b.distance > 0) ? -1 : 1);
             //add to table in order
             for (let i = 0; i < sortedList.length; i++) {
-                addDataToTable(sortedList[i].lamppostNo, sortedList[i].distance, sortedList[i].streetName);
+                addDataToTable(sortedList[i].lamppostNo, sortedList[i].distance, sortedList[i].streetName, sortedList[i].district);
             }
         }
 
-        function addDataToTable(lampPostNo, distance, streetName) {
+        function addDataToTable(lampPostNo, distance, streetName, district) {
             var table = document.getElementById("lampposttable");
             var row = table.insertRow(1);
             var cell1 = row.insertCell(0);
@@ -237,7 +250,14 @@
             var cell3 = row.insertCell(2);
             cell1.innerHTML = lampPostNo;
             cell2.innerHTML = distance + "m";
-            cell3.innerHTML = streetName;
+            cell3.innerHTML = `<button onclick="showLamppostDetails()"><i class="fa-solid fa-circle-info"></i></button>`;
+            //change icon and table row styling when clicked
+            var details_lampPostNo = document.getElementById("lamppostNo");
+            var details_longitude = document.getElementById("longitude");
+            var details_latitude = document.getElementById("latitude");
+            var details_district = document.getElementById("district");
+            var details_streetName = document.getElementById("streetName");
+
             row.onclick = () => {
                 var markers = lampPostLayer.getLayers();
                 for (var i = 0; i < markers.length; i++) {
@@ -248,8 +268,14 @@
                 for (var i = 0; i < markers.length; i++) {
                     if (markers[i].getTooltip().getContent() == lampPostNo) {
                         markers[i].setIcon(redIcon);
+                        details_lampPostNo.innerHTML = lampPostNo;
+                        details_longitude.innerHTML = markers[i].getLatLng().lng;
+                        details_latitude.innerHTML = markers[i].getLatLng().lat;
+                        details_district.innerHTML = district;
+                        details_streetName.innerHTML = streetName;
                         map.flyTo(markers[i].getLatLng(), 19);
                     }
+
                 }
             }
         }
@@ -272,7 +298,6 @@
         }
 
         function addStylingToCell(lamppostNo) {
-            var tableContainer = document.getElementById("tableContainer");
             var table = document.getElementById("lampposttable");
             var rowCount = table.rows.length;
             for (var i = rowCount - 1; i > 0; i--) {
@@ -281,28 +306,6 @@
                     table.rows[i].style.color = "white";
                 }
             }
-            tableContainer.style.display = "none";
-        }
-
-        function rangeChange() {
-            var range = document.getElementById("range").value;
-            if (range > 150) {
-                range = 150;
-                document.getElementById("range").value = 150;
-                if (language == "EN") {
-                    alert("Maximum range is 150m")
-                } else {
-                    alert("最大範圍為150m")
-                }
-            }
-            defaultRange = range;
-            let personMarker = personLayer.getLayers()[0];
-            let lat = personMarker.getLatLng().lat;
-            let long = personMarker.getLatLng().lng;
-            getLampposts(long, lat).then(data => {
-                clearMarkerLayer(lampPostLayer);
-                plotLampposts(data);
-            });
         }
 
         function changeLanguage() {
@@ -310,19 +313,17 @@
             if (language == "EN") {
                 button.innerHTML = language;
                 language = "中文";
-                document.getElementById("rangeLabel").innerHTML = "範圍";
-                document.getElementById("lamppostLabel").innerHTML = "燈柱號碼";
+                document.getElementById("lamppostLabel").innerHTML = "號碼";
                 document.getElementById("distanceLabel").innerHTML = "距離";
-                document.getElementById("streetLabel").innerHTML = "街名";
+                document.getElementById("lamppostDetails").innerHTML = "詳情";
                 map.removeLayer(englishLayer);;
                 map.addLayer(chineseLayer);
             } else {
                 button.innerHTML = language;
                 language = "EN"
-                document.getElementById("rangeLabel").innerHTML = "Range";
-                document.getElementById("lamppostLabel").innerHTML = "Lamppost No.";
+                document.getElementById("lamppostLabel").innerHTML = "No.";
                 document.getElementById("distanceLabel").innerHTML = "Distance";
-                document.getElementById("streetLabel").innerHTML = "Street Name";
+                document.getElementById("lamppostDetails").innerHTML = "Details";
                 map.removeLayer(chineseLayer);
                 map.addLayer(englishLayer);
             }
@@ -336,6 +337,17 @@
                 table.style.display = "none";
             }
         }
+
+        function showLamppostDetails(){
+            let details = document.getElementById("lamppostDetailsContainer");
+            details.style.display = "block";
+        }
+
+        function hideDetails(){
+            let details = document.getElementById("lamppostDetailsContainer");
+            details.style.display = "none";
+        }
+
         getLocation();
     </script>
 </body>

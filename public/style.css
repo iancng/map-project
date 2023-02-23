@@ -26,44 +26,9 @@ table > tbody > tr > td{
   cursor: pointer;
 }
 
-nav{
-  display:flex;
-  width:100%;
-  align-items:center;
-  justify-content: space-around;
-  height:5vh;
-}
-
-.nav-left{
-  flex-grow: 1;
-  margin-left: 50px;
-}
-
-.nav-right{
-  flex-grow: 1;
-  text-align: right;
-  margin-right: 50px;
-}
-
-.languageButton{
-  background-color: #4CAF50;
-  border: none;
-  color: white;
-  padding: 7.5px 15px;
-  text-align: center;
-  text-decoration: none;
-  font-size: 12x;
-  margin: 2px 5px;
-  cursor: pointer;
-  display: inline-block;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 25px;
-}
-
 #map{
   margin-bottom: 5px;
-  height: 94vh; 
+  height: 100vh; 
   width:100%;
   position: relative;
 }
@@ -75,14 +40,14 @@ nav{
   position: absolute;
   top:120px;
   left:5px;
-  width:200px;
+  width:150x;
   z-index: 500;
   padding:5px;
   border-radius: 5px;
   max-height: 80%;
   overflow: scroll;
 }
-.rangeInput{
+.functionBar{
   text-align: center;
   position: absolute;
   border-radius: 30px;
@@ -91,10 +56,10 @@ nav{
   top:50px;
   left: 48px;
   z-index: 500;
-  padding: 0px 30px;
+  padding: 5px 30px;
 }
 
-.rangeInput > button{
+button{
   background-color: #4CAF50;
   border: none;
   color: white;
@@ -107,7 +72,7 @@ nav{
   font-size: 20px;
 }
 
-.rangeInput > input{
+.functionBar > input{
   border: 1px solid #ccc;
   border-radius: 4px;
   box-sizing: border-box;
@@ -118,4 +83,28 @@ nav{
   width: 100px;
   margin-left: auto;
   margin-right: auto;
+}
+.lamppostDetailsContainer{
+  display:none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  text-align:center;
+  transform: translate(-50%, -50%);
+  background-color: whitesmoke;
+  border-radius: 5px;
+  padding: 10px;
+  width: 300px;
+  height: 300px;
+  z-index: 1001;
+}
+
+#hideDetails{
+  display:flex;
+}
+
+.detailsTable{
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
