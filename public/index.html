@@ -9,19 +9,29 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
         integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI=" crossorigin="" />
     <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
+        integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
         integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM=" crossorigin=""></script>
 </head>
 
 <body>
-    <button id="languageButton" onclick="changeLanguage()" class="languageButton">EN</button>
-    <div id="map" style="height: 70vh; width:100%;"></div>
-    <div>
-        <div class="rangeInput">
-            <span id="rangeLabel">範圍:</span><input type="number" name="range" id="range"><span>m</span>
-            <button onclick="rangeChange()" class="search" id="searchButton">搜尋</button>
+    <nav>
+        <div class="nav-left">
+            <h5 class="title">查閱燈柱</h5>
         </div>
-        <button onclick="getLocation()" class="loading" id="getLocationButton">取得位置</button>
+        <div class="nav-right">
+            <button id="languageButton" onclick="changeLanguage()" class="languageButton">EN</button>
+        </div>
+    </nav>
+    <div class="rangeInput">
+        <span id="rangeLabel">範圍:</span><input type="number" name="range" id="range"><span>m</span>
+        <button onclick="rangeChange()" class="searchButton" id="searchButton"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <button onclick="getLocation()" class="getLocationButton" id="getLocationButton"><i class="fa-solid fa-location-arrow"></i></button>
+        <button onClick="showTable()" class="tableButton"><i class="fa-solid fa-bars"></i></button>
+    </div>
+    <div class="tableContainer" id="tableContainer">
         <!-- add border to table-->
         <table id="lampposttable">
             <tr>
@@ -29,10 +39,11 @@
                 <th id="distanceLabel">距離</th>
                 <th id="streetLabel">街名</th>
             </tr>
+        </table>
     </div>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"
-        integrity="sha384-/KNQL8Nu5gCHLqwqfQjA689Hhoqgi2S84SNUxC3roTe4EhJ9AfLkp8QiQcU8AMzI"
-        crossorigin="anonymous"></script>
+    <div id="map">
+    </div>
+
     <script>
         var map = L.map('map', {
             //hong kong 
@@ -105,23 +116,6 @@
             showPosition(position);
         })
 
-        //SOCKETIO
-        var socket = io();
-        socket.on('sharedLocation',(location)=>{
-            let lat = location.lat;
-            let long = location.long;
-            let username = location.username;
-            //add marker with location with username as tooltip and id
-            //if marker already exist, remove it
-            if (otherUserLayer.getLayer(username) !== undefined) {
-                otherUserLayer.removeLayer(username);
-            }
-            var latlon = new L.LatLng(lat, long);
-            var marker = L.marker(latlon, {icon: redIcon }).addTo(otherUserLayer);
-            marker.bindTooltip(username);
-            marker.id = username;
-        })
-
         //get location
         function getLocation() {
             let option = {
@@ -154,8 +148,9 @@
                     setMarkers(position.lng, position.lat);
                 });
                 setMarkers(lon, lat);
-                socket.emit('location', {username:'', lat: lat, lon: lon });
             }
+            let tableContainer = document.getElementById("tableContainer");
+            tableContainer.style.display = "block";
         }
 
         function setMarkers(lon, lat) {
@@ -317,8 +312,6 @@
                 document.getElementById("lamppostLabel").innerHTML = "燈柱號碼";
                 document.getElementById("distanceLabel").innerHTML = "距離";
                 document.getElementById("streetLabel").innerHTML = "街名";
-                document.getElementById("searchButton").innerHTML = "搜尋";
-                document.getElementById("getLocationButton").innerHTML = "取得位置";
                 map.removeLayer(englishLayer);;
                 map.addLayer(chineseLayer);
             } else {
@@ -328,12 +321,18 @@
                 document.getElementById("lamppostLabel").innerHTML = "Lamppost No.";
                 document.getElementById("distanceLabel").innerHTML = "Distance";
                 document.getElementById("streetLabel").innerHTML = "Street Name";
-                document.getElementById("searchButton").innerHTML = "Search";
-                document.getElementById("getLocationButton").innerHTML = "Get Location";
                 map.removeLayer(chineseLayer);
                 map.addLayer(englishLayer);
             }
+        }
 
+        function showTable(){
+            let table = document.getElementById("tableContainer");
+            if(table.style.display == "none"){
+                table.style.display = "block";
+            }else{
+                table.style.display = "none";
+            }
         }
         getLocation();
     </script>
