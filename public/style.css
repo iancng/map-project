@@ -38,7 +38,7 @@ table > tbody > tr > td{
   background-color: whitesmoke;
   box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2);
   position: absolute;
-  top:80px;
+  top:90px;
   left:5px;
   width:150x;
   z-index: 500;
