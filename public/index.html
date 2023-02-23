@@ -272,6 +272,7 @@
         }
 
         function addStylingToCell(lamppostNo) {
+            var tableContainer = document.getElementById("tableContainer");
             var table = document.getElementById("lampposttable");
             var rowCount = table.rows.length;
             for (var i = rowCount - 1; i > 0; i--) {
@@ -280,6 +281,7 @@
                     table.rows[i].style.color = "white";
                 }
             }
+            tableContainer.style.display = "none";
         }
 
         function rangeChange() {
